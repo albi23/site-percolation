@@ -1,0 +1,7 @@
+// Initial parameters for percolation mode
+// Every content behind // is treated as comment
+16     // L
+1000    // T
+0.01    // p0
+1       // pk
+0.01    // dp
