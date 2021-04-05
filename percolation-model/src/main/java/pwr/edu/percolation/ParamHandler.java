@@ -7,26 +7,27 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.*;
 
 final class ParamHandler {
 
     private static final String PARAM_FILE_NAME = "perc_init.txt";
     private static final byte REQUIRED_PARAMETERS_COUNT = 5;
+    private static final Logger logger = Logger.getLogger(ParamHandler.class.getName());
 
     public static PercolationParams readInputParams() {
-        try (final InputStream resourceAsStream = Main.class.getClassLoader().getResourceAsStream(PARAM_FILE_NAME);
+        try (final InputStream resourceAsStream = MonteCarloSimulation.class.getClassLoader().getResourceAsStream(PARAM_FILE_NAME);
              final BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAsStream, StandardCharsets.UTF_8));) {
-            final String[] strings = reader.lines().
-                    filter(line -> !line.startsWith("//"))
+            final String[] strings = reader.lines()
+                    .filter(line -> !line.startsWith("//"))
                     .map(line -> line.split("//", 2)[0].trim())
+                    .filter(line -> !line.isBlank())
                     .toArray(String[]::new);
             return validateParams(strings);
         } catch (IOException e) {
-            System.err.println("Unexpected error with reading file \"" + PARAM_FILE_NAME + "\"");
-            System.exit(1);
+            showErrorAndExit("Unexpected error with reading file \"" + PARAM_FILE_NAME + "\"");
         } catch (NullPointerException npEx) {
-            System.err.println("Missing file " + PARAM_FILE_NAME + " in resources folder");
-            System.exit(1);
+            showErrorAndExit("Missing file " + PARAM_FILE_NAME + " in resources folder");
         }
         return null;
     }
@@ -43,15 +44,15 @@ final class ParamHandler {
                 3, s -> s <= 1.0 && s > 0.0,
                 4, s -> s <= 1.0 && s > 0.0);
 
-        double[] parsedArgs = new double[5];
+        double[] parsedArgs = new double[REQUIRED_PARAMETERS_COUNT];
         for (int i = 0; i < REQUIRED_PARAMETERS_COUNT; i++) {
             try {
                 final double value = Double.parseDouble(params[i]);
                 if (!extraValidators.get(i).apply(value))
-                    showErrorAndExit("Value out of range for " + (i+1) + " argument");
+                    showErrorAndExit("Value out of range for " + (i + 1) + " argument");
                 parsedArgs[i] = value;
             } catch (NumberFormatException ex) {
-                showErrorAndExit("Incorrect value for " + (i+1) + " argument");
+                showErrorAndExit("Incorrect value for " + (i + 1) + " argument");
             }
         }
         return new PercolationParams((int) parsedArgs[0], (int) parsedArgs[1], parsedArgs[2], parsedArgs[3], parsedArgs[4]);
@@ -59,7 +60,7 @@ final class ParamHandler {
 
 
     private static void showErrorAndExit(final String message) {
-        System.err.println(message);
+        logger.severe(message);
         System.exit(1);
     }
 

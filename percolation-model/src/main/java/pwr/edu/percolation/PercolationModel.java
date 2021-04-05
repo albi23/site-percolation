@@ -19,12 +19,10 @@ class PercolationModel {
 
     public int[][] generateLatticeModel(final double probability) {
         int[][] model = this.getEmptyModel();
-        for (int i = 0, size = params.L(); i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (rand.nextDouble() < probability)
+        for (int i = 0, size = params.L(); i < size; i++)
+            for (int j = 0; j < size; j++)
+                if (rand.nextDouble() <= probability)
                     model[i][j] = 1;
-            }
-        }
         return model;
     }
 
@@ -42,7 +40,7 @@ class PercolationModel {
         return destination;
     }
 
-    public int shortestPathInModel(int[][] model) {
+    public int shortestPathInModel(final int[][] model) {
         Queue<Pair> queue = new ArrayDeque<>();
 
         for (int i = 0, len = model.length; i < len; i++) {
@@ -51,7 +49,6 @@ class PercolationModel {
                 queue.add(new Pair(0, i));
             }
         }
-        printMatrix(model);
 
         final int lastRowIndex = model.length - 1;
         while (!queue.isEmpty()) {
@@ -76,7 +73,6 @@ class PercolationModel {
                 queue.add(new Pair(cell.x, cell.y - 1));
                 model[cell.x][cell.y - 1] += model[cell.x][cell.y];
             }
-//            printMatrix(model);
         }
 
         int min = Integer.MAX_VALUE;
@@ -85,13 +81,16 @@ class PercolationModel {
         return min == Integer.MAX_VALUE ? 0 : min - 1;
     }
 
-    public void clusterFinding(final int[][] model) {
-        final int[][] ints = hka.clusterFinding(model);
-        this.printMatrix(ints);
+    public int clusterCountFinding(final int[][] model) {
+        return hka.maxClusterFinding(model);
     }
 
-    public void distributionOfClusters(final int[][] model) {
-        hka.distributionOfClusters(model);
+    public Map<Integer, Long> distributionOfClusters(final int[][] model) {
+        return hka.distributionOfClusters(model);
+    }
+
+    public int maxClusterSize(final int[][] model){
+        return distributionOfClusters(model).keySet().stream().max(Integer::compareTo).orElse(0);
     }
 
     private static class HosenKopelmanAlgorithm {
@@ -100,8 +99,10 @@ class PercolationModel {
          * Hoshen–Kopelman algorithm for cluster finding
          *
          * @param model percolation model
+         *
+         * return max cluster size
          */
-        public int[][] clusterFinding(final int[][] model) {
+         int maxClusterFinding(final int[][] model) {
 
             final int[] label = new int[model.length * model.length / 2];
 
@@ -135,31 +136,27 @@ class PercolationModel {
                         }
                         model[i][j] = new_labels[x];
                     }
-
-            int total_clusters = new_labels[0];
-            System.out.println("total_clusters: " + total_clusters);
-            return model;
+            return new_labels[0];
         }
 
-        public void distributionOfClusters(final int[][] model) {
-            final int[][] ints = this.clusterFinding(model);
+        Map<Integer, Long> distributionOfClusters(final int[][] model) {
+            this.maxClusterFinding(model);
 
             final HashMap<Integer, Integer> labelOnOccurrences = new HashMap<>();
-            for (int i = 0, len = ints.length; i < len; i++) {
-                for (int j = 0; j < len; j++) {
-                    if (ints[i][j] != 0) {
-                        if (!labelOnOccurrences.containsKey(ints[i][j])) {
-                            labelOnOccurrences.put(ints[i][j], 1);
+            for (int[] rows : model) {
+                for (int colValue : rows) {
+                    if (colValue != 0) {
+                        if (!labelOnOccurrences.containsKey(colValue)) {
+                            labelOnOccurrences.put(colValue, 1);
                         } else {
-                            int val = labelOnOccurrences.get(ints[i][j]);
-                            labelOnOccurrences.put(ints[i][j], ++val);
+                            int val = labelOnOccurrences.get(colValue);
+                            labelOnOccurrences.put(colValue, ++val);
                         }
                     }
                 }
             }
-            final Map<Integer, Long> collect = labelOnOccurrences.values().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-            System.out.println(labelOnOccurrences);
-            System.out.println(collect);
+            return labelOnOccurrences.values().stream()
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         }
 
         private int updateCluster(final int[] labels) {
@@ -169,11 +166,11 @@ class PercolationModel {
             return labels[0];
         }
 
-        private int unionFind(int x, int y, int[] labels) {
+        private int unionFind(int x, int y, final int[] labels) {
             return labels[find(x, labels)] = find(y, labels);
         }
 
-        private int find(int i, int[] labels) {
+        private int find(int i, final int[] labels) {
             int y = i;
             while (labels[y] != y)
                 y = labels[y];
@@ -187,11 +184,11 @@ class PercolationModel {
     }
 
 
-    public void printMatrix(int[][] model) {
+    public void printMatrix(final int[][] model) {
         final StringBuilder sb = new StringBuilder();
         for (int[] ints : model)
             sb.append(Arrays.toString(ints)).append("\n");
-        System.out.print(sb.append("\n\n\n\n\n\n\n"));
+        System.out.print(sb.append("\n\n"));
     }
 
 
