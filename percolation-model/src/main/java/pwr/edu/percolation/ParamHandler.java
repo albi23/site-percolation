@@ -29,7 +29,7 @@ final class ParamHandler {
         } catch (NullPointerException npEx) {
             showErrorAndExit("Missing file " + PARAM_FILE_NAME + " in resources folder");
         }
-        return null;
+        throw new IllegalStateException("Params file was not loaded");
     }
 
 
@@ -40,7 +40,7 @@ final class ParamHandler {
         Map<Integer, Function<Double, Boolean>> extraValidators = Map.of(
                 0, s -> s > 0,
                 1, s -> s > 0,
-                2, s -> s <= 1.0 && s > 0.0,
+                2, s -> s <= 1.0 && s >= 0.0,
                 3, s -> s <= 1.0 && s > 0.0,
                 4, s -> s <= 1.0 && s > 0.0);
 

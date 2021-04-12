@@ -6,8 +6,8 @@ import java.util.stream.Collectors;
 
 class PercolationModel {
 
+    private static final Random rand = new Random();
     private final PercolationParams params;
-    private final Random rand = new Random();
     private final HosenKopelmanAlgorithm hka = new HosenKopelmanAlgorithm();
 
     record Pair(int x, int y) {
@@ -40,6 +40,12 @@ class PercolationModel {
         return destination;
     }
 
+    /**
+     * Burning method for finding shortest path in model
+     *
+     * @param model - input model
+     * @return length of shortest path or -1 if not exists
+     */
     public int shortestPathInModel(final int[][] model) {
         Queue<Pair> queue = new ArrayDeque<>();
 
@@ -53,20 +59,20 @@ class PercolationModel {
         final int lastRowIndex = model.length - 1;
         while (!queue.isEmpty()) {
             final Pair cell = queue.poll();
-            // East neighbour
+            // North neighbour
             if (cell.x - 1 > -1 && model[cell.x - 1][cell.y] == 1) {
                 model[cell.x - 1][cell.y] += model[cell.x][cell.y];
                 queue.add(new Pair(cell.x - 1, cell.y));
             }
-            // West neighbour
+            // South neighbour
             if (cell.x + 1 < model.length && model[cell.x + 1][cell.y] == 1) {
-                queue.add(new Pair(cell.x + 1, cell.y));
+                if (cell.x + 1 != lastRowIndex) queue.add(new Pair(cell.x + 1, cell.y));
                 model[cell.x + 1][cell.y] += model[cell.x][cell.y];
             }
-            // North neighbour
+            // West neighbour
             if (cell.y + 1 < model.length && model[cell.x][cell.y + 1] == 1) {
                 queue.add(new Pair(cell.x, cell.y + 1));
-                if (cell.y + 1 != lastRowIndex) model[cell.x][cell.y + 1] += model[cell.x][cell.y];
+                model[cell.x][cell.y + 1] += model[cell.x][cell.y];
             }
             // East neighbour
             if (cell.y - 1 > -1 && model[cell.x][cell.y - 1] == 1) {
@@ -89,7 +95,7 @@ class PercolationModel {
         return hka.distributionOfClusters(model);
     }
 
-    public int maxClusterSize(final int[][] model){
+    public int maxClusterSize(final int[][] model) {
         return distributionOfClusters(model).keySet().stream().max(Integer::compareTo).orElse(0);
     }
 
@@ -99,10 +105,10 @@ class PercolationModel {
          * Hoshen–Kopelman algorithm for cluster finding
          *
          * @param model percolation model
-         *
-         * return max cluster size
+         *              <p>
+         *              return max cluster size
          */
-         int maxClusterFinding(final int[][] model) {
+        int maxClusterFinding(final int[][] model) {
 
             final int[] label = new int[model.length * model.length / 2];
 
@@ -122,9 +128,9 @@ class PercolationModel {
                 }
             }
 
-              /* This is a little bit sneaky.. we create a mapping from the canonical labels
-                 determined by union/find into a new set of canonical labels, which are
-                 guaranteed to be sequential. */
+           /* This is a little bit sneaky.. we create a mapping from the canonical labels
+              determined by union/find into a new set of canonical labels, which are
+              guaranteed to be sequential. */
             final int[] new_labels = new int[model.length * model.length / 2];
             for (int i = 0; i < model.length; i++)
                 for (int j = 0; j < model.length; j++)
@@ -156,7 +162,7 @@ class PercolationModel {
                 }
             }
             return labelOnOccurrences.values().stream()
-                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+                    .collect(Collectors.groupingBy(Function.identity(), TreeMap::new, Collectors.counting()));
         }
 
         private int updateCluster(final int[] labels) {
