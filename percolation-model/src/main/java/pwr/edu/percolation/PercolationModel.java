@@ -128,7 +128,7 @@ class PercolationModel {
                 }
             }
 
-           /* This is a little bit sneaky.. we create a mapping from the canonical labels
+           /* create a mapping from the canonical labels
               determined by union/find into a new set of canonical labels, which are
               guaranteed to be sequential. */
             final int[] new_labels = new int[model.length * model.length / 2];
